@@ -1,4 +1,4 @@
-// 基于时间的动画： shader控制旋转和移动
+// 处理3d环境丢失，方法参考nd2d
 
 package test
 {
@@ -20,14 +20,19 @@ package test
 	import flash.utils.getTimer;
 
 	[SWF(width="800",height="800",frameRate="60")]
-	public class Test8 extends Sprite
+	public class Test9 extends Sprite
 	{
 		private var stage3D:Stage3D;
 		private var context3D:Context3D;
 		private var indexBuffer:IndexBuffer3D;
 		private var perspection:PerspectiveMatrix3D;
 		private var modelView:Matrix3D;
-		private function initStage3D(e:Event = null):void{
+		
+		private var deviceInitialized:Boolean = false;
+		private var deviceWasLost:Boolean = false;
+		
+		private function initStage3D(e:Event = null):void
+		{
 			if(stage)
 			{
 				stage3D = stage.stage3Ds[0];
@@ -41,19 +46,26 @@ package test
 		
 		private function contextReady(pEvent:Event):void
 		{
+			
 			context3D = stage3D.context3D;
 			context3D.configureBackBuffer(stage.stageWidth,stage.stageHeight,2,true);
 			context3D.enableErrorChecking = true;
 			
-            initProgram();
+			trace("isHardwareAccelerated? " , context3D.driverInfo.toLowerCase().indexOf("software") == -1)
+			
+			// 如果Event.CONTEXT3D_CREATE 第2次被调用，说明环境丢失过，刚刚恢复
+			if(deviceInitialized) 
+			{
+				deviceWasLost = true;  //做个标记，留到enterframe最前边处理环境丢失
+			}
+			deviceInitialized = true;
+			
+			initProgram();
 			initBuffers();
-
 			
 			perspection = new PerspectiveMatrix3D();
-//			perspection.perspectiveFieldOfViewLH(45*Math.PI/180, stage.stageWidth/stage.stageHeight, 0.1, 10000);
 			perspection.orthoLH(stage.stageWidth,stage.stageHeight,0,1)
 			modelView = new Matrix3D();
-//			modelView.appendTranslation(0,0,500);
 			addEventListener(Event.ENTER_FRAME,enterFrameHandler);
 
 		}
@@ -107,7 +119,7 @@ package test
 			program.upload(vertexAssembler.agalcode,fragmentAssembler.agalcode);
 			context3D.setProgram(program);
 		}
-		
+			
 		private function initBuffers():void
 		{
 			//Init vertex buffer.
@@ -129,6 +141,19 @@ package test
 		private var constVector:Vector.<Number> = new Vector.<Number>();
 		private function enterFrameHandler(pEvent:Event):void{
 			
+			if(context3D.driverInfo == "Disposed")  //环境丢失时，禁止主循环
+			    return ;
+			
+			if(deviceWasLost) 
+			{
+				//环境恢复后
+				//这里for each所有children handle deviceLost 
+				deviceWasLost = false;
+			}
+			
+			
+			
+			
 			var t:Number = getTimer() * 0.001;
 			var elapsed:int = t - lastFrameTime 
 				
@@ -149,7 +174,7 @@ package test
 			
 			lastFrameTime = t;
 		}
-		public function Test8()
+		public function Test9()
 		{
 			initStage3D()
 			
