@@ -44,7 +44,7 @@ package test
 			
 			//Create vertex assembler;
 			AGAL.init();
-			AGAL.m44("op","va0","vc0");
+			AGAL.m44("op","va0","vc0"); //pos * MVP
 			AGAL.mov("v0","va1");
 			var vertexAssembler:AGALMiniAssembler = new AGALMiniAssembler();
 			vertexAssembler.assemble(Context3DProgramType.VERTEX,AGAL.code);
@@ -86,9 +86,9 @@ package test
 			
 			modelView.prependRotation(2, Vector3D.Y_AXIS);
 			
-			var modelProjection:Matrix3D = new Matrix3D();
-			modelProjection.append(modelView);
-			modelProjection.append(perspection);
+			var modelProjection:Matrix3D = new Matrix3D(); 
+			modelProjection.append(modelView);             //转换到世界坐标系
+			modelProjection.append(perspection);           //转换到投影坐标系
 			
 			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,0,modelProjection,true);//为啥转置矩阵true？
 			

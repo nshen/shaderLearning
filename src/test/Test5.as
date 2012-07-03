@@ -112,9 +112,9 @@ package test
 			cameraInvert.invert();
 			
 			mvp.identity();
-			mvp.append(modelMatrix);
-			mvp.append(cameraInvert);
-			mvp.append(projectionMatrix);
+			mvp.append(modelMatrix);    //model to world space
+			mvp.append(cameraInvert);   // world to eye space
+			mvp.append(projectionMatrix); // eye space to clip space
 			
 			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,0,mvp,true)
 				

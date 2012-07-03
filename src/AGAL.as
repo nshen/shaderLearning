@@ -1,4 +1,14 @@
-//from : http://code.google.com/p/bwhiting/source/browse/trunk/b3d/src/b3d/materials/shaders/AGAL.as
+//
+/**
+ * 来自 : http://code.google.com/p/bwhiting/source/browse/trunk/b3d/src/b3d/materials/shaders/AGAL.as
+ * 
+ * 修改：
+ * 
+ * 添加注释
+ * 一些方法source和target不能相同，抛出异常
+ * sin方法写错修改
+ * 
+ */
 package
 {
 	public class AGAL
@@ -17,11 +27,11 @@ package
 				trace(code);
 			return code;
 		}
-		/**BLENDING**/
 		
-		//
-		/**UTILS**/
-		//returns the length of a source
+		/**
+		 *  UTILS:
+		 *  returns the length of a source .
+		 */
 		public static function length(target:String, source:String):String
 		{
 			var code:String = "";
@@ -30,13 +40,20 @@ package
 			_code += code;
 			return code;
 		}
-		//same as mix() in opengl but slower: 
-		//dest = source1 + (source2 - source1) * ratio;
-		//或者解释成dest = (1-ratio)source1 + ratio source2
+		
+		/**
+		 *  UTILS:
+		 *  same as mix() in opengl but slower: 
+		 *  dest = source1 + (source2 - source1) * ratio;
+		 *  或者解释成
+		 *  dest = (1-ratio)source1 + ratio source2
+		 * 
+		 *  @param ratio 0~1 之间的值
+		 */
 		public static function lerp(target:String, source1:String, source2:String, ratio:String):String
 		{
-			if(target == source1 || target == source2)
-				throw new Error("target 不能与源重名");
+			if(target == source1 || target == ratio)
+				throw new Error("target == source1 or target == radio");
 			var code:String = "";
 			code += sub(target, source2, source1);
 			code += mul(target, target, ratio);
@@ -44,7 +61,11 @@ package
 			_code += code;
 			return code;
 		}
-		//distance between two points
+		
+		/**
+		 * UTILS:
+		 * distance between two points
+		 */
 		public static function distance(target:String, source1:String, source2:String):String
 		{
 			var code:String = "";
@@ -53,15 +74,17 @@ package
 			_code += code;
 			return code;
 		}
+		
+		/**
+		 *   UTILS:
+		 *   http://en.wikipedia.org/wiki/Smoothstep
+		 */
 		public static function smoothstep(target:String, min:String, max:String, x:String, TWO:String, THREE:String, temp:String):String
 		{
 			var code:String = "";
-			// Scale, bias and saturate x to 0..1 range
-			code += sub(target, max, min);
-			code += sub(temp, x, min);
-			code += div(target, temp, target);
-			code += sat(target, target);
-			// Evaluate polynomial
+			//Scale, bias and saturate x to 0..1 range
+			code +=  saturate(target,x,min,max,temp);
+			// Evaluate polynomial  x*x*(3 - 2*x);
 			code += mul(temp, TWO, target);
 			code += sub(temp, THREE, temp);
 			code += mul(target, target, target);
@@ -69,7 +92,27 @@ package
 			_code += code;
 			return code;
 		}
-		//unit vector from Vertex to Vertex
+		
+		/**
+		 *  UTILS:
+		 *  Scale, bias and saturate x to 0..1 range
+		 */
+		public static function saturate(target:String , x:String ,min:String ,max:String , temp:String):String
+		{
+			if(target == min)
+				throw new Error("target == min")
+			var code:String = "";
+			code += sub(target,max,min);
+			code += sub(temp,x,min);
+			code += div(target,temp,target);
+			code += sat(target,target);
+			_code += code;
+			return code;
+		}
+		/**
+		 * UTILS:
+		 * unit vector from Vertex to Vertex
+		 */
 		public static function direction(target:String, source1:String, source2:String):String
 		{
 			var code:String = "";
@@ -78,33 +121,8 @@ package
 			_code += code;
 			return code;
 		}
-		//unit vector from Light to the Vertex position
-		public static function light(target:String, light:String, position:String):String
-		{
-			var code:String = "";
-			code += sub(target, position, light);
-			code += nrm(target+".xyz", target);
-			_code += code;
-			return code;
-		}
-		//unit vector from Vertex P to the View position V
-		public static function view(target:String, position:String, camera:String):String
-		{
-			var code:String = "";
-			code += sub(target, camera, position);
-			code += nrm(target+".xyz", target);
-			_code += code;
-			return code;
-		}
-		//unit vector halfway H, between L and V, used for Blinn simplification
-		public static function half(target:String, light:String, view:String):String
-		{
-			var code:String = "";
-			code += sub(target, view, light);
-			code += nrm(target+".xyz", target);
-			_code += code;
-			return code;
-		}
+		
+
 		//unit vector representing light reflection R
 		public static function reflect(target:String, view:String, normal:String):String
 		{
@@ -176,7 +194,7 @@ package
 		public static function diffuse2(target:String, viewTarget:String, fresnelTarget:String, position:String, camera:String, normal:String, diffuseData:String):String
 		{
 			var code:String = "";
-			code += view(viewTarget, position, camera);
+			code += direction(viewTarget, position, camera);
 			code += fresnel(fresnelTarget, viewTarget, normal);                     
 			code += mul(target, fresnelTarget, diffuseData);
 			_code += code;
@@ -215,7 +233,7 @@ package
 		{
 			//pow(saturate(dot(Half, ViewDir)), 15)
 			var code:String = "";
-			code += half(target, light, view);                                      //half now in target
+			code += direction(target, light, view);                                      //half now in target
 			code += dp3(target, target, normal+".xyz");                     //dp3 half vector with ws_normal
 			code += pow(target, target, specularData+".w");         //pow with shinneyness
 			code += mul(target, target, specularData+".xyz");       //multiply with spec data
@@ -224,105 +242,145 @@ package
 		}
 		
 		/**AGAL COMMANDS**/
-		//move data from source1 to destination, componentwise
+		
+		/**
+		 * move data from source1 to destination, componentwise
+		 */
 		public static function mov(target:String, source:String):String
 		{
 			var code:String = "mov " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1 + source2, componentwise
+		/**
+		 * destination = source1 + source2, componentwise
+		 */
 		public static function add(target:String, source1:String, source2:String):String
 		{
 			var code:String = "add " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1 - source2, componentwise
+		/**
+		 * destination = source1 - source2, componentwise
+		 */
 		public static function sub(target:String, source1:String, source2:String):String
 		{
 			var code:String = "sub " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1 * source2, componentwise
+		/**
+		 * destination = source1 * source2, componentwise
+		 */
 		public static function mul(target:String, source1:String, source2:String):String
 		{
 			var code:String = "mul " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1 / source2, componentwise
+		/**
+		 * destination = source1 / source2, componentwise
+		 */
 		public static function div(target:String, source1:String, source2:String):String
 		{
 			var code:String = "div " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = 1/source1, componentwise
+		/**
+		 * 倒数
+		 * reciprocal of one register, component-wise
+		 * destination = 1/source1, componentwise
+		 */
 		public static function rcp(target:String, source1:String, source2:String):String
 		{
 			var code:String = "rcp " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = minimum(source1,source2), componentwise
+		/**
+		 * destination = minimum(source1,source2), componentwise
+		 */
 		public static function min(target:String, source1:String, source2:String):String
 		{
 			var code:String = "min " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = maximum(source1,source2), componentwise
+		/**
+		 * destination = maximum(source1,source2), componentwise
+		 */
 		public static function max(target:String, source1:String, source2:String):String
 		{
 			var code:String = "max " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1 - (float)floor(source1), componentwise
+		/**
+		 * 小数部分
+		 * fractional part of one register, component-wise
+		 * destination = source1 - (float)floor(source1), componentwise
+		 */
 		public static function frc(target:String, source1:String):String
 		{
 			var code:String = "frc " + target + " " + source1 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = sqrt(source1), componentwise
+		/**
+		 * square root of one register, component-wise
+		 * destination = sqrt(source1), componentwise
+		 */
 		public static function sqt(target:String, source:String):String
 		{
 			var code:String = "sqt " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = 1/sqrt(source1), componentwise
+		/**
+		 * 平方根的倒数
+		 * reciprocal of square root of one register,component-wise
+		 * destination = 1/sqrt(source1), componentwise
+		 */
 		public static function rsq(target:String, source:String):String
 		{
 			var code:String = "rsq " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = pow(source1,source2), componentwise
+		/**
+		 * destination = pow(source1,source2), componentwise
+		 */
 		public static function pow(target:String, source1:String, source2:String):String
 		{
 			var code:String = "pow " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = log_2(source1), componentwise
+		/**
+		 * base 2 logarithm of one register, componentwise
+		 * destination = log_2(source1), componentwise
+		 */
 		public static function log(target:String, source:String):String
 		{
 			var code:String = "log " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = 2^source1, componentwise
+		/**
+		 * destination = 2^source1, componentwise
+		 */
 		public static function exp(target:String, source:String):String
 		{
 			var code:String = "exp " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = normalize(source1), componentwise
+		/**
+		 * normalize one register to length of 1
+		 * destination = normalize(source1), componentwise
+		 */
 		public static function nrm(target:String, source:String):String
 		{
 			if(target.indexOf(".") == -1) target += ".xyz"; //w must be masked
@@ -330,32 +388,48 @@ package
 			_code += code;
 			return code;
 		}
-		//destination = sin(source1), componentwise
+		/**
+		 * destination = sin(source1), componentwise
+		 */
 		public static function sin(target:String, source:String):String
 		{
+			var code:String = "sin " + target + " " + source + "\n";
 			_code += code;
 			return code;
-			var code:String = "sin " + target + " " + source + "\n";
 		}
-		//destination = cos(source1), componentwise
+		
+		/**
+		 * destination = cos(source1), componentwise
+		 */
 		public static function cos(target:String, source:String):String
 		{
 			var code:String = "cos " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination.x = source1.y * source2.z - source1.z * source2.y
-		//destination.y = source1.z * source2.x - source1.x * source2.z
-		//destination.z = source1.x * source2.y - source1.y * source2.x
+		
+		/**
+		 * cross product between two registers
+		 * 
+		 * destination.x = source1.y * source2.z - source1.z * source2.y
+		 * destination.y = source1.z * source2.x - source1.x * source2.z
+		 * destination.z = source1.x * source2.y - source1.y * source2.x
+		 */
 		public static function crs(target:String, source1:String, source2:String):String
 		{
 			var code:String = "crs " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1.x*source2.x + source1.y*source2.y
+		
+		/**
+		 * UTILS:
+		 * destination = source1.x*source2.x + source1.y*source2.y
+		 */
 		public static function dp2(target:String, source1:String, source2:String):String
 		{
+			if(target == source1 || target == source2)
+				throw new Error("target == source1 || target == source2");
 			var code:String = "";
 			code += mul(target+".x", source1+".x", source2+".x");
 			code += mul(target+".y", source1+".y", source2+".y");
@@ -363,44 +437,62 @@ package
 			_code += code;
 			return code;
 		}
-		//destination = source1.x*source2.x + source1.y*source2.y + source1.z*source2.z
+		/**
+		 * destination = source1.x*source2.x + source1.y*source2.y + source1.z*source2.z
+		 */
 		public static function dp3(target:String, source1:String, source2:String):String
 		{
 			var code:String = "dp3 " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1.x*source2.x + source1.y*source2.y + source1.z*source2.z + source1.w*source2.w
+		/**
+		 * destination = source1.x*source2.x + source1.y*source2.y + source1.z*source2.z + source1.w*source2.w
+		 */
 		public static function dp4(target:String, source1:String, source2:String):String
 		{
 			var code:String = "dp4 " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = abs(source1), componentwise
+		/**
+		 * absolute value of one register, component-wise`
+		 * destination = abs(source1), componentwise
+		 */
 		public static function abs(target:String, source:String):String
 		{
 			var code:String = "abs " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = -source1, componentwise
+		/**
+		 * destination = -source1, componentwise
+		 */
 		public static function neg(target:String, source:String):String
 		{
 			var code:String = "neg " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = maximum(minimum(source1,1),0), componentwise
+		/**
+		 * clamp one register in the range (0,1),component-wise
+		 * destination = maximum(minimum(source1,1),0), componentwise
+	    */
 		public static function sat(target:String, source:String):String
 		{
 			var code:String = "sat " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z)
-		//destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z)
-		//destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z)
+		
+		/**
+		 * 
+		 * matrix multiply between 3 components vector, and 3x3 matrix
+		 * 
+		 * destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z)
+		 * destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z)
+		 * destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z)
+		 */
 		public static function m33(target:String, source1:String, source2:String):String
 		{
 			if(target.indexOf(".") == -1) target += ".xyz"; //w must be masked
@@ -408,13 +500,14 @@ package
 			_code += code;
 			return code;
 		}
-		//
 		
-		/*
-		* destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z) + (source1.w * source2[0].w)
-		* destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z) + (source1.w * source2[1].w)
-		* destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z) + (source1.w * source2[2].w)
-		* destination.w = (source1.x * source2[3].x) + (source1.y * source2[3].y) + (source1.z * source2[3].z) + (source1.w * source2[3].w)
+		/**
+		 * matrix multiply between 4 components vector,and 4x4 matrix
+		 * 
+		 * destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z) + (source1.w * source2[0].w)
+		 * destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z) + (source1.w * source2[1].w)
+		 * destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z) + (source1.w * source2[2].w)
+		 * destination.w = (source1.x * source2[3].x) + (source1.y * source2[3].y) + (source1.z * source2[3].z) + (source1.w * source2[3].w)
 		*/
 		public static function m44(target:String, source1:String, source2:String):String
 		{
@@ -422,33 +515,52 @@ package
 			_code += code;
 			return code;
 		}
-		//destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z) + (source1.w * source2[0].w)
-		//destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z) + (source1.w * source2[1].w)
-		//destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z) + (source1.w * source2[2].w)
+		
+		/**
+		 * matrix multiply between 4 components vector,and 3x4 matrix
+		 * 
+		 * destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z) + (source1.w * source2[0].w)
+		 * destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z) + (source1.w * source2[1].w)
+		 * destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z) + (source1.w * source2[2].w)
+		 */
 		public static function m34(target:String, source1:String, source2:String):String
 		{
 			var code:String = "m34 " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}               
-		//(fragment shader only) If single scalar source component is less than zero, fragment is discarded and not drawn to the frame buffer. The destination register must be all 0. 
+		/**
+		 * (fragment shader only)
+		 * If single scalar source component is < 0, fragment is discarded and not drawn to the frame buffer. The destination register must be all 0. 
+		 */ 
 		public static function kil(target:String, source:String):String
 		{
 			var code:String = "kil " + target + " " + source + "\n";
 			_code += code;
 			return code;
 		}
-		//(fragment shader only) destination = load from texture source2 at coordinates source1. In this source2 must be in sampler format.
+		/**
+		 * (fragment shader only) 
+		 * destination = load from texture (texture) at coordinates (coord). 
+		 * 
+		 * @param coord uv
+		 * @param texture fs<n> from Context3D::setTextureAt()
+		 * @param type: 2d, 3d, cube
+		 * @param wrap: clamp, repeat
+		 * @param filter: mipnearest, miplinear, mipnone, nomip, nearest, linear, centroid, single, depth
+		 * 
+		 */
 		public static function tex(target:String, coord:String, texture:String, type:String, wrap:String, filter:String):String
 		{
-			//type: 2d, 3d, cube
-			//wrap: clamp, repeat
-			//filter: mipnearest, miplinear, mipnone, nomip, nearest, linear, centroid, single, depth
 			var code:String = "tex "+target+" "+coord+" "+texture+" <"+type+","+wrap+","+filter+">" + "\n";
 			_code += code;
 			return code;
 		}
-		//(fragment shader only) 
+		/**
+		 * (fragment shader only) 
+		 * Utils:
+		 * tex <cube, clamp,"+filter+">
+		 */
 		public static function texCube(target:String, coord:String, texture:String, filter:String):String
 		{
 			//filter: mipnearest, miplinear, mipnone, nomip, nearest, linear, centroid, single, depth
@@ -457,15 +569,18 @@ package
 			return code;
 		}
 		
-		
-		//destination = source1 >= source2 ? 1 : 0, componentwise
+		/**
+		 * destination = source1 >= source2 ? 1 : 0, componentwise
+		 */
 		public static function sge(target:String, source1:String, source2:String):String
 		{
 			var code:String = "sge " + target + " " + source1 + " " + source2 + "\n";
 			_code += code;
 			return code;
 		}
-		//destination = source1 < source2 ? 1 : 0, componentwise
+		/**
+		 * destination = source1 < source2 ? 1 : 0, componentwise
+		 */
 		public static function slt(target:String, source1:String, source2:String):String
 		{
 			var code:String = "slt " + target + " " + source1 + " " + source2 + "\n";
@@ -473,6 +588,8 @@ package
 			return code;
 		}
 		
+		///////////////////////////////////////
+		// 下边都是看不懂的
 		
 		//converters
 		public static function vectorToColor(target:String, vector:String, one:String,two:String):String

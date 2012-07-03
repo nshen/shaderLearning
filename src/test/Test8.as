@@ -1,0 +1,149 @@
+// 基于时间的动画： shader控制旋转和移动
+
+package test
+{
+	import com.adobe.utils.*;
+	
+	import flash.display.Sprite;
+	import flash.display.Stage3D;
+	import flash.display3D.Context3D;
+	import flash.display3D.Context3DProgramType;
+	import flash.display3D.Context3DRenderMode;
+	import flash.display3D.Context3DTriangleFace;
+	import flash.display3D.Context3DVertexBufferFormat;
+	import flash.display3D.IndexBuffer3D;
+	import flash.display3D.Program3D;
+	import flash.display3D.VertexBuffer3D;
+	import flash.events.Event;
+	import flash.geom.Matrix3D;
+	import flash.geom.Vector3D;
+	import flash.utils.getTimer;
+
+	[SWF(width="800",height="800",frameRate="60")]
+	public class Test8 extends Sprite
+	{
+		private var stage3D:Stage3D;
+		private var context3D:Context3D;
+		private var indexBuffer:IndexBuffer3D;
+		private var perspection:PerspectiveMatrix3D;
+		private var modelView:Matrix3D;
+		private function initStage3D(e:Event = null):void{
+			if(stage)
+			{
+				stage3D = stage.stage3Ds[0];
+				stage3D.addEventListener(Event.CONTEXT3D_CREATE, contextReady);
+				stage3D.requestContext3D(Context3DRenderMode.AUTO);
+			}else
+			{
+				addEventListener(Event.ADDED_TO_STAGE,initStage3D);
+			}
+		}
+		
+		private function contextReady(pEvent:Event):void
+		{
+			context3D = stage3D.context3D;
+			context3D.configureBackBuffer(stage.stageWidth,stage.stageHeight,2,true);
+			context3D.enableErrorChecking = true;
+			
+			// *旋转
+			AGAL.init();
+			AGAL.mov("vt0","vc4"); //两个常量不能直接计算  // vc4 [t , startRot , rotV , moveSpeed]
+			AGAL.mul("vt0.x","vt0.x","vc4.z"); // t * rotV
+			AGAL.add("vt0.x","vt0.x","vc4.y"); // startRot + t * rotV
+			
+			//2d向量旋转公式：new Vector2D( (cos*x) - (sin*y) , (cos*y) + (sin*x) );
+			AGAL.sin("vt0.y","vt0.x");
+			AGAL.cos("vt0.z","vt0.x");
+			AGAL.mul("vt1.x","vt0.z","va0.x"); // cos*x
+			AGAL.mul("vt1.y","vt0.y","va0.y"); // sin*y
+			AGAL.mul("vt1.z","vt0.z","va0.y"); // cos*y
+			AGAL.mul("vt1.w","vt0.y","va0.x"); // sin*x
+			
+			AGAL.mov("vt2","va0");
+			AGAL.sub("vt2.x","vt1.x","vt1.y"); //(cos*x) - (sin*y)
+			AGAL.add("vt2.y","vt1.z","vt1.w"); //(cos*y) + (sin*x)
+			
+			/**
+			      上边三句换成这样是不行的，必须先整体move va，然后再覆盖zw ，这里卡了一天
+			   AGAL.sub("vt2.x","vt1.x","vt1.y"); //(cos*x) - (sin*y)
+			   AGAL.add("vt2.y","vt1.z","vt1.w"); //(cos*y) + (sin*x)
+			   AGAL.mov("vt2.zw","va0.zw");   
+			*/
+			
+			// *移动
+			AGAL.mov("vt0","vc4"); // 清空vt0为vc4
+			AGAL.sin("vt0.x","vt0.x");     // vt0.x =  sin(t)
+			AGAL.mul("vt0.x","vt0.w","vt0.x"); //vt0.x = moveSpeed * sin(t)
+			AGAL.add("vt2.xy","vt2.xy","vt0.xx"); // pos = pos + moveSpeed * sin(t)
+			
+			AGAL.m44("op","vt2","vc0");
+			AGAL.mov("v0","va1");
+
+			var vertexAssembler:AGALMiniAssembler = new AGALMiniAssembler();
+			vertexAssembler.assemble(Context3DProgramType.VERTEX,AGAL.code);
+			
+			//Create fragment assembler;
+			AGAL.init();
+			AGAL.mov("oc","v0");
+			var fragmentAssembler:AGALMiniAssembler = new AGALMiniAssembler();
+			fragmentAssembler.assemble(Context3DProgramType.FRAGMENT,AGAL.code);
+			
+			//Init vertex buffer.
+			var vertexBuffer:VertexBuffer3D = context3D.createVertexBuffer(3,6);
+			vertexBuffer.uploadFromVector(Vector.<Number>([
+				-100,-100,0,1,0,0,   //xyz rgb
+				100,-100,0,0,1,0,
+				0,100,0,0,0,1]),0,3);
+			context3D.setVertexBufferAt(0,vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
+			context3D.setVertexBufferAt(1,vertexBuffer,3,Context3DVertexBufferFormat.FLOAT_3);
+			
+			indexBuffer = context3D.createIndexBuffer(3);
+			indexBuffer.uploadFromVector(Vector.<uint>([
+				0,1,2
+			]),0,3);
+			
+			var program:Program3D = context3D.createProgram();
+			program.upload(vertexAssembler.agalcode,fragmentAssembler.agalcode);
+			context3D.setProgram(program);
+			
+			perspection = new PerspectiveMatrix3D();
+//			perspection.perspectiveFieldOfViewLH(45*Math.PI/180, stage.stageWidth/stage.stageHeight, 0.1, 10000);
+			perspection.orthoLH(stage.stageWidth,stage.stageHeight,0,1)
+			modelView = new Matrix3D();
+//			modelView.appendTranslation(0,0,500);
+			addEventListener(Event.ENTER_FRAME,enterFrameHandler);
+
+		}
+		
+		
+		private var lastFrameTime:int = 0;
+		private var constVector:Vector.<Number> = new Vector.<Number>();
+		private function enterFrameHandler(pEvent:Event):void{
+			
+			var t:Number = getTimer() * 0.001;
+			var elapsed:int = t - lastFrameTime 
+				
+			context3D.clear();
+			var modelProjection:Matrix3D = new Matrix3D(); 
+			modelProjection.append(modelView);              
+			modelProjection.append(perspection);          
+			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,0,modelProjection,true);
+			
+			constVector[0] = t ;  //持续时间
+			constVector[1] = 0;   // 初始角度
+			constVector[2] = 3;   // 旋转速度
+			constVector[3] = 300; // 移动速度
+			context3D.setProgramConstantsFromVector(Context3DProgramType.VERTEX,4,constVector,1); //vc4
+			
+			context3D.drawTriangles(indexBuffer);
+			context3D.present();
+			
+			lastFrameTime = t;
+		}
+		public function Test8()
+		{
+			initStage3D()
+			
+		}
+	}
+}

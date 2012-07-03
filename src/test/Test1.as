@@ -53,7 +53,7 @@ package test
 			//Init vertex buffer.
 			var vertexBuffer:VertexBuffer3D = context3D.createVertexBuffer(3,6);
 			vertexBuffer.uploadFromVector(Vector.<Number>([
-				-1,-1,0,1,0,0,
+				-1,-1,0,1,0,0,   //xyz rgb
 				1,-1,0,0,1,0,
 				0,1,0,0,0,1]),0,3);
 			context3D.setVertexBufferAt(0,vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
