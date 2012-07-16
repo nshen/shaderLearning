@@ -9,3 +9,4 @@ Test6 : 漫反射 (有bug，还没搞定) 看出问题的 nshen121@gmail.com 告
 Test7 : 正交投影 orthoLH
 Test8 : 基于时间的动画：shader控制旋转和移动
 Test9 : 3d环境丢失处理
+Test10: 解析obj模型 ,mipmap的texture
