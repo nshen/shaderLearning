@@ -7,7 +7,7 @@
  * 添加注释
  * 一些方法source和target不能相同，抛出异常
  * sin方法写错修改
- * 
+ * kil参数错了
  */
 package
 {
@@ -40,6 +40,34 @@ package
 			_code += code;
 			return code;
 		}
+		
+		/**
+		 * UTILS:
+		 * return 
+		 * 
+		 * @param point va0.xy  
+		 * @param angle vt0.x ,计算过程中vt0.yz会被临时存储sin(vt0.x)和cos(vt0.x)
+		 * @param temp  vt1.xyzw
+		 */
+//		public static function rotate2d(target:String , point:String ,angle:String,temp:String )
+//		{
+//			var code:String = "";
+//			code += sin(angle)
+//			code += sin(temp + ".x"
+//				
+//				
+//				//2d向量旋转公式：new Vector2D( (cos*x) - (sin*y) , (cos*y) + (sin*x) );
+//				AGAL.sin("vt0.y","vt0.x");
+//			AGAL.cos("vt0.z","vt0.x");
+//			AGAL.mul("vt1.x","vt0.z","va0.x"); // cos*x
+//			AGAL.mul("vt1.y","vt0.y","va0.y"); // sin*y
+//			AGAL.mul("vt1.z","vt0.z","va0.y"); // cos*y
+//			AGAL.mul("vt1.w","vt0.y","va0.x"); // sin*x
+//			
+//			AGAL.mov("vt2","va0");
+//			AGAL.sub("vt2.x","vt1.x","vt1.y"); //(cos*x) - (sin*y)
+//			AGAL.add("vt2.y","vt1.z","vt1.w"); //(cos*y) + (sin*x)
+//		}
 		
 		/**
 		 *  UTILS:
@@ -533,9 +561,9 @@ package
 		 * (fragment shader only)
 		 * If single scalar source component is < 0, fragment is discarded and not drawn to the frame buffer. The destination register must be all 0. 
 		 */ 
-		public static function kil(target:String, source:String):String
+		public static function kil( source:String):String
 		{
-			var code:String = "kil " + target + " " + source + "\n";
+			var code:String = "kil " + source + "\n";
 			_code += code;
 			return code;
 		}

@@ -91,7 +91,7 @@ package test
 			AGAL.add("vt2.y","vt1.z","vt1.w"); //(cos*y) + (sin*x)
 			
 			/**
-			 上边三句换成这样是不行的，必须先整体move va，然后再覆盖zw ，这里卡了一天
+			 上边三句换成这样是不行的，必须先整体move va，然后再覆盖zw ，不知道为什么，这里卡了一天
 			 AGAL.sub("vt2.x","vt1.x","vt1.y"); //(cos*x) - (sin*y)
 			 AGAL.add("vt2.y","vt1.z","vt1.w"); //(cos*y) + (sin*x)
 			 AGAL.mov("vt2.zw","va0.zw");   
