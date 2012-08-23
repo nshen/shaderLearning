@@ -108,6 +108,7 @@ package test
 		private function initBuffers():void
 		{
 			myMesh = new Stage3dObjParser(myObjData, context3D, 1, true, true);
+//			myMesh.dataDumpTrace();
 			context3D.setVertexBufferAt(0, myMesh.positionsBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 			context3D.setVertexBufferAt(1, myMesh.uvBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
 			//context3D.setVertexBufferAt(2, myMesh.colorsBuffer, 0, Context3DVertexBufferFormat.FLOAT_4);

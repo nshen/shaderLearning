@@ -10,3 +10,4 @@ Test7 : 正交投影 orthoLH
 Test8 : 基于时间的动画：shader控制旋转和移动
 Test9 : 3d环境丢失处理
 Test10: 解析obj模型 ,mipmap的texture
+Test11: EasyAGAL TEST
