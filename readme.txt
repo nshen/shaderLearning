@@ -11,3 +11,5 @@ Test8 : 基于时间的动画：shader控制旋转和移动
 Test9 : 3d环境丢失处理
 Test10: 解析obj模型 ,mipmap的texture
 Test11: EasyAGAL TEST
+Test12: cup拖尾
+Test13: gpu拖尾,不完美,觉得是easyagal的atan有bug?
