@@ -93,6 +93,7 @@ package test
 }
 
 import com.barliesque.agal.EasyAGAL;
+import com.barliesque.shaders.macro.Utils;
 
 class EasyShader extends EasyAGAL
 {
@@ -105,6 +106,7 @@ class EasyShader extends EasyAGAL
 		super._vertexShader();
 	    m44(OUTPUT,ATTRIBUTE[0],CONST[0]);
 		mov(VARYING[0],ATTRIBUTE[1]);
+
 	}
 	
 	protected override function _fragmentShader():void 

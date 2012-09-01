@@ -2,20 +2,17 @@
 
 package test
 {
-	import com.adobe.utils.*;
+	import com.adobe.utils.PerspectiveMatrix3D;
 	
 	import flash.display.Sprite;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DRenderMode;
-	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.IndexBuffer3D;
-	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.events.Event;
-	import flash.events.MouseEvent;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	import flash.utils.getTimer;
@@ -23,6 +20,7 @@ package test
 	[SWF(width="800",height="800")]
 	public class Test12 extends Sprite
 	{
+		 
 		private var stage3D:Stage3D;
 		private var context3D:Context3D;
 		private var indexBuffer:IndexBuffer3D;
@@ -206,9 +204,6 @@ package test
 }
 
 import com.barliesque.agal.EasyAGAL;
-import com.barliesque.agal.IRegister;
-import com.barliesque.shaders.macro.Trig;
-import com.barliesque.shaders.macro.Utils;
 
 class EasyShader extends EasyAGAL
 {

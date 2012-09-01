@@ -19,7 +19,7 @@ package test
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	import flash.utils.getTimer;
-
+	
 	[SWF(width="800",height="800")]
 	public class Test13 extends Sprite
 	{
@@ -49,46 +49,16 @@ package test
 			context3D = stage3D.context3D;
 			context3D.configureBackBuffer(stage.stageWidth,stage.stageHeight,2,true);
 			context3D.enableErrorChecking = true
-				
+			
 			for(var p:int = 0 ; p < _recordPointsNum ; p ++)
 			{
 				_points.push({x:0,y:0});
 				
 			}
-			
 
 			
-			
-			//n个记录点有2n个顶点，(n-1)*6个索引 
-//			
-//		    _vertexData = new Vector.<Number>(_recordPointsNum * 2,true);
-//			_indexData  = new Vector.<uint>((_recordPointsNum - 1) * 6 ,true);
-		
-//			var tail:Vector.<Number> = Vector.<Number>([
-//				0,0,0, -200,50,0,1,  0,0,0,   1,0,0,   //xyz rgb
-//				0,0,0, -200,50,0,-1, 0,0,0,   0,1,0,
-//				-200,50,0, 0,0,0,1,     100,0,0,  0,0,1,
-//				-200,50,0, 0,0,0,-1,    100,0,0,  1,0,0,
-//				0,0,0,    100,0,0,1,   0,0,0,   0,1,0,
-//				0,0,0,   100,0,0,-1,  0,0,0,   0,0,1
-//			]);
-			
-//			var tailINdex:Vector.<uint> = Vector.<uint>([
-//				0,1,2,
-//				1,2,3,
-//				3,2,4,
-//				3,4,5
-//			])
-			
-//			var tailINdex:Vector.<uint> = Vector.<uint>([
-//				0,1,3,
-//				0,3,2,
-//				2,3,5,
-//				2,5,4
-//			])
-				
 			_indexData  = new Vector.<uint>((_recordPointsNum - 1) * 6 ,true);
-		    for( var i:uint = 0 ; i < _recordPointsNum - 1  ; i ++)
+			for( var i:uint = 0 ; i < _recordPointsNum - 1  ; i ++)
 			{
 				_indexData[i * 6] = i * 2  ;
 				_indexData[i * 6 + 1] = i * 2 + 1;
@@ -99,7 +69,7 @@ package test
 			}
 			indexBuffer = context3D.createIndexBuffer((_recordPointsNum - 1) * 6);
 			indexBuffer.uploadFromVector(_indexData,0,(_recordPointsNum - 1) * 6);
-		
+			
 			_vertexData = updateVertexData();
 			
 			vertexBuffer = context3D.createVertexBuffer(_recordPointsNum * 2,13);
@@ -118,16 +88,16 @@ package test
 			perspection.orthoLH(stage.stageWidth,stage.stageHeight,0,1)
 			modelView = new Matrix3D();
 			addEventListener(Event.ENTER_FRAME,enterFrameHandler);
-           
+			
 			
 		}
 		
 		protected var _lastFrameTime:Number = 0;
 		protected var _passTime:Number = 0 ;
-		protected var _recordTime:Number = 10;
+		protected var _recordTime:Number = 30;
 		
 		protected var _points:Array = [];
-		protected var _recordPointsNum:uint = 30;
+		protected var _recordPointsNum:uint = 10;
 		private function enterFrameHandler(pEvent:Event):void{
 			
 			var t:Number = getTimer();
@@ -135,7 +105,7 @@ package test
 			_lastFrameTime = t;
 			
 			_passTime += elapsed;
-			if(_passTime >= _recordTime)
+			if(_passTime >= _recordTime  )
 			{
 				_passTime = 0;
 				recordPoints(stage.mouseX,stage.mouseY)
@@ -145,10 +115,11 @@ package test
 			context3D.setProgram(_shader.program);
 			
 			var modelProjection:Matrix3D = new Matrix3D(); 
-		 	modelProjection.append(modelView);              
+			modelProjection.append(modelView);              
 			modelProjection.append(perspection);          
 			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,0,modelProjection,true);
-			context3D.setProgramConstantsFromVector(Context3DProgramType.VERTEX,4,Vector.<Number>([70,Math.PI/2,Math.PI,200]),1);
+			context3D.setProgramConstantsFromVector(Context3DProgramType.VERTEX,4,Vector.<Number>([70,Math.PI/2,Math.PI,Number.MIN_VALUE]),1);
+			context3D.setProgramConstantsFromVector(Context3DProgramType.VERTEX,5,Vector.<Number>([70,Math.PI/4,Math.PI/16,Number.MIN_VALUE]),1);
 			context3D.drawTriangles(indexBuffer);
 			context3D.present();
 		}
@@ -158,8 +129,12 @@ package test
 			var newx:Number = mouseX - 400;
 			var newy:Number = -1* (mouseY -400);
 			
+			
 			_points.pop();
+			
 			_points.unshift({x:newx , y:newy});
+			
+			
 			
 			_vertexData = updateVertexData();
 			
@@ -175,7 +150,7 @@ package test
 		protected var _indexData:Vector.<uint> ;
 		protected function updateVertexData():Vector.<Number>
 		{
-            var data:Vector.<Number> = new Vector.<Number>()
+			var data:Vector.<Number> = new Vector.<Number>()
 			var last:Object;
 			var current:Object;
 			var next:Object;
@@ -200,11 +175,9 @@ package test
 				{
 					last = _points[i-1];
 					current = _points[i];
-				    next = _points[i+1];
+					next = _points[i+1];
 				}
-//				_vertexData.splice(i*26,26,last.x,last.y,0, current.x,current.y,0,1 ,next.x,next.y,0, 1,0,0    ,    last.x,last.y,0, current.x,current.y,0,-1 ,next.x,next.y,0, 0,1,0);
-//				_vertexData[i*26] = 
-//				_vertexData[i*2+1] =
+
 				data.push(last.x,last.y,0, current.x,current.y,0,1 ,next.x,next.y,0, 1,0,0);
 				data.push(last.x,last.y,0, current.x,current.y,0,-1 ,next.x,next.y,0, 0,1,0);
 				
@@ -239,7 +212,6 @@ class EasyShader extends EasyAGAL
 		Utils.setTwoOneZeroHalf(tozh); //[2,1,0,0.5]
 		
 		var width:IRegister = TEMP[1];
-//		mov(width,ATTRIBUTE[1].w); //
 		mul(width,ATTRIBUTE[1].w,CONST[4].x); //vt1: + - 宽度偏移
 		
 		var pos:IRegister = TEMP[0];
@@ -251,17 +223,11 @@ class EasyShader extends EasyAGAL
 		nrm(TEMP[2].xyz , TEMP[2].xyz);
 		sub(TEMP[3].xyz , ATTRIBUTE[1].xyz,ATTRIBUTE[2].xyz) //  current - next 
 		nrm(TEMP[3].xyz , TEMP[3].xyz);
+		add(TEMP[2].xyz , TEMP[2].xyz,TEMP[3].xyz); // n1 + n2
+		nrm(TEMP[2].xyz,TEMP[2].xyz); //normal(n1+n2)
 		
-//		sub(TEMP[4].xyz , ATTRIBUTE[0].xyz , ATTRIBUTE[2].xyz)
-//		nrm(TEMP[4].xyz , TEMP[4].xyz);
-		
-		
-		add(TEMP[2].xyz , TEMP[2].xyz,TEMP[3].xyz);
-		nrm(TEMP[2].xyz,TEMP[2].xyz);
-//		add(TEMP[2].xyz , TEMP[2].xyz , TEMP[4].xyz);
-//		nrm(TEMP[2].xyz , TEMP[2].xyz);
-		
-		Trig.atan2(TEMP[3],TEMP[2].x , TEMP[2].y ,tozh.z, tozh.y ,CONST[4].y ,CONST[4].z , TEMP[5],TEMP[6]);
+		Trig.atan2(TEMP[3],TEMP[2].x , TEMP[2].y ,TEMP[5],TEMP[6],CONST[5].y,CONST[5].z,CONST[5].w);
+//		Trig.atan2(TEMP[3],TEMP[2].x , TEMP[2].y ,tozh.z, tozh.y ,CONST[4].y ,CONST[4].z , TEMP[5],TEMP[6]);
 		add(TEMP[3].x , TEMP[3].x ,CONST[4].y); // + Math.pi/2
 		
 		
@@ -271,7 +237,7 @@ class EasyShader extends EasyAGAL
 		
 		add(pos.xy,pos.xy,TEMP[5].xy);
 		
-	    m44(OUTPUT,pos,CONST[0]);
+		m44(OUTPUT,pos,CONST[0]);
 		
 		mov(VARYING[0],ATTRIBUTE[3]); //rgb
 	}
