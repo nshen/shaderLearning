@@ -13,3 +13,5 @@ Test10: 解析obj模型 ,mipmap的texture
 Test11: EasyAGAL TEST
 Test12: cup拖尾
 Test13: gpu拖尾(easyAGAL)
+
+test
